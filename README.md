@@ -1,12 +1,6 @@
 Video Walk  through  and screenshots will be  added  later.  
 
 # Log Analysis - Sysmon
-
-**Platform:** Blue Team Labs Online
-**Category:** Security Operations
-**Difficulty:** Easy
-**Date Completed:** 2021-05-07
-
 ---
 
 ## Scenario
