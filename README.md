@@ -1,11 +1,17 @@
-Video Walk  through  and screenshots will be  added  later.  
-
 # Log Analysis - Sysmon
+
+**Platform:** Blue Team Labs Online
+**Category:** Security Operations
+**Difficulty:** Easy
+**Date Completed:** 2021-05-07
+
 ---
 
 ## Scenario
 
 > You are provided with Sysmon logs from a compromised endpoint. Analyse the logs to find out the steps and techniques used by the attacker.
+
+![Challenge submission - all solved](images/submission.png)
 
 ## Objective
 
@@ -53,6 +59,8 @@ jq -s -r '.[] | select(.Event.System.EventID==1) | "\(.Event.EventData.UtcTime) 
 
 Kill chain reconstructed: malicious HTA → PowerShell shellcode injector → download `supply.exe` → COMSPEC hijack → host/priv discovery → download JuicyPotato → SYSTEM reverse shell → UAC bypass.
 
+![Process create timeline](images/process-timeline.png)
+
 ### PowerShell Stager
 
 The `powershell.exe -nop -w hidden -e <base64>` payload decoded (CyberChef: From Base64 → Gunzip) to a reflective shellcode injector: resolves `VirtualAlloc` / `CreateThread` / `WaitForSingleObject`, allocates RWX memory (`0x40` = PAGE_EXECUTE_READWRITE), and runs embedded Metasploit shellcode on a new thread.
@@ -74,6 +82,8 @@ C:\Users\IEUser\AppData\Local\Temp\_MEI99922\python27.dll
 
 The `_MEI` extraction folder + `python27.dll` = PyInstaller signature. `msvcr90.dll` is the VC++ 2008 runtime Python 2.7 depends on.
 
+![PyInstaller dependency artifacts](images/language-mei.png)
+
 ---
 
 ## Question Walkthrough
@@ -91,8 +101,9 @@ User executed the malicious HTA via mshta: `"C:\Windows\SysWOW64\mshta.exe" "C:\
 `cmd /c set comspec=C:\windows\temp\supply.exe` — redirects the command processor to the malware.
 
 **Q4: What is the process used as a LOLBIN to execute malicious commands?**
-**Answer:** `mshta.exe`
-Trusted signed Windows binary abused to execute the attacker's `updater.hta`.
+**Answer:** `ftp.exe`
+
+![ftp.exe event](images/ftp-event.png)
 
 **Q5: Malware executed multiple same commands at a time, what is the first command executed?**
 **Answer:** `ipconfig`
@@ -127,7 +138,7 @@ Confirmed by `_MEI99922\python27.dll` and `msvcr90.dll` in EventID 11 file-creat
 
 ## Analyst Notes
 
-Second-stage `supply.exe` is a Python 2.7 PyInstaller binary acting as a command runner for the attacker. MITRE ATT&CK: T1566 (Phishing), T1218.005 (Mshta), T1059.001 (PowerShell), T1027 (Obfuscation), T1055 (Process Injection), T1105 (Ingress Tool Transfer), T1546 (COMSPEC hijack), T1016/T1033/T1057 (Discovery), T1068 (JuicyPotato priv-esc), T1548.002 (UAC bypass via eventvwr). Defenders should alert on: mshta spawning PowerShell, `-nop -w hidden -e` encoded PowerShell, RWX VirtualAlloc, `set comspec=`, and eventvwr.msc auto-elevation.
+Second-stage `supply.exe` is a Python 2.7 PyInstaller binary acting as a command runner for the attacker. MITRE ATT&CK: T1566 (Phishing), T1218.005 (Mshta), T1059.001 (PowerShell), T1027 (Obfuscation), T1055 (Process Injection), T1105 (Ingress Tool Transfer), T1546 (COMSPEC hijack), T1016/T1033/T1057 (Discovery), T1068 (JuicyPotato priv-esc), T1548.002 (UAC bypass via eventvwr).
 
 ## Key Takeaways
 
